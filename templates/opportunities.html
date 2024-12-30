@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Arbitrage Opportunities</title>
+
+  <!-- bootstrap CSS -->
+  <link 
+    rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+  >
+  <style>
+    .navbar {
+      background-color: #28a745 !important;
+    }
+    .navbar-brand,
+    .nav-link {
+      color: #fff !important;
+    }
+    .hero-small {
+      background-color: #f8fdf8;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      color: #2f5c2f;
+    }
+    .opportunity-card {
+      margin-bottom: 2rem;
+    }
+    .card-header {
+      background-color: #e9f7e9;
+      color: #2f5c2f;
+    }
+    .badge-secondary {
+      background-color: #4caf50;
+    }
+    footer {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: #e9f7e9;
+      color: #2f5c2f;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- navbar -->
+<nav class="navbar navbar-expand-lg">
+  <a class="navbar-brand" href="home">Arb Calculator</a>
+  <button
+    class="navbar-toggler"
+    type="button"
+    data-toggle="collapse"
+    data-target="#navbarNav"
+    aria-controls="navbarNav"
+    aria-expanded="false"
+    aria-label="Toggle navigation"
+  >
+    <span class="navbar-toggler-icon"></span>
+  </button>
+</nav>
+
+<!-- hero for page -->
+<div class="hero-small">
+  <h1>Arbitrage Opportunities</h1>
+  <p class="lead">
+    below are the arbitrage situations found across multiple sports.
+    Click <a href="home">here</a> to go back home.
+  </p>
+</div>
+
+<!-- main container -->
+<div class="container">
+  <!-- refresh btn -->
+  <div class="mb-3 text-right">
+    <button class="btn btn-primary" onclick="location.reload();">
+      Refresh
+    </button>
+  </div>
+
+  <!--Arb Cards-->
+  {% if opportunities and opportunities|length > 0 %}
+    <div class="alert alert-success" style="background-color: #d4edda; color: #2f5c2f;">
+      Found {{ opportunities|length }} 
+      {{ 'opportunity' if opportunities|length == 1 else 'opportunities' }}!
+    </div>
+
+    <div class="row">
+      {% for opp in opportunities %}
+        <div class="col-md-6 opportunity-card">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <!-- Show the sport, so user knows which sport_key this belongs to -->
+              <strong>Sport:</strong> {{ opp.sport_key }}<br>
+              <small>Event ID: {{ opp.event_id }}</small>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title text-success">
+                {{ opp.home_team }} vs {{ opp.away_team }}
+              </h5>
+              <p class="card-text">
+                <strong>Commence Time (UTC):</strong> {{ opp.commence_time }}
+              </p>
+
+              <!-- sum_of_reciprocals (Arb Formula) -->
+              <p>
+                <strong>Arb Formula:</strong><br>
+                sum_of_reciprocals = Σ(1 / best_price) =
+                <span class="badge badge-secondary">
+                  {{ "%.4f"|format(opp.sum_of_reciprocals) }}
+                </span>
+                <br>(Arbitrage if < 1.0)
+              </p>
+
+              <p>
+                <strong>Best Odds:</strong>
+                <ul class="list-group list-group-flush">
+                  {% for outcome_name, data in opp.best_odds.items() %}
+                  <li class="list-group-item">
+                    <strong>{{ outcome_name }}:</strong>
+                    {% if data.link %}
+                      <!-- Link to the bookie URL if available -->
+                      <a href="{{ data.link }}" target="_blank" rel="noopener noreferrer">
+                        {{ data.price }} @ {{ data.bookie }}
+                      </a>
+                    {% else %}
+                      {{ data.price }} @ {{ data.bookie }}
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+              </p>
+
+              <!-- Stakes -->
+              <p>
+                <strong>Recommended Stakes</strong> 
+                (for total stake =
+                <strong>£{{ "%.2f"|format(opp.total_stake) }}</strong>):
+                <ul class="list-group list-group-flush">
+                  {% for outcome_name, stake_amt in opp.stakes.items() %}
+                  <li class="list-group-item">
+                    <strong>{{ outcome_name }}:</strong> 
+                    £{{ "%.2f"|format(stake_amt) }}
+                  </li>
+                  {% endfor %}
+                </ul>
+              </p>
+
+              <!-- Profit -->
+              <p>
+                <strong>Guaranteed Payout:</strong> 
+                £{{ "%.2f"|format(opp.guaranteed_payout) }} <br>
+                <strong>Potential Profit:</strong> 
+                £{{ "%.2f"|format(opp.potential_profit) }}
+              </p>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-warning" style="background-color: #fff3cd; color: #2f5c2f;">
+      No arbitrage opportunities found.
+    </div>
+  {% endif %}
+
+  <!-- 2) MINI CALCULATOR FORM -->
+  <hr>
+  <h3>Check Your Own Odds</h3>
+  <p>Input up to 3 outcome odds and your total stake. We'll see if it's an arbitrage.</p>
+
+  <!-- FORM -->
+  <form method="POST" class="mb-4">
+    <div class="form-row">
+      <div class="form-group col-md-3">
+        <label for="odds1">Outcome 1 Odds:</label>
+        <input type="number" step="0.01" class="form-control" id="odds1" name="odds1" placeholder="e.g. 1.80" required>
+      </div>
+      <div class="form-group col-md-3">
+        <label for="odds2">Outcome 2 Odds:</label>
+        <input type="number" step="0.01" class="form-control" id="odds2" name="odds2" placeholder="e.g. 2.10" required>
+      </div>
+      <div class="form-group col-md-3">
+        <label for="odds3">Outcome 3 Odds (optional):</label>
+        <input type="number" step="0.01" class="form-control" id="odds3" name="odds3" placeholder="e.g. 3.50">
+      </div>
+      <div class="form-group col-md-3">
+        <label for="bankroll">Total Stake (£):</label>
+        <input type="number" step="0.01" class="form-control" id="bankroll" name="bankroll" value="100" required>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-success">Check Arbitrage</button>
+  </form>
+
+  <!-- 3) DISPLAY CALCULATOR RESULTS IF USER POSTED -->
+  {% if calc_is_arb is not none %}
+    {% if calc_is_arb %}
+      <div class="alert alert-success">
+        <h4>Yes, it's an Arbitrage!</h4>
+        <p>Sum of Reciprocals: {{ calc_sum_recips|round(4) }} (< 1.0)</p>
+        <p><strong>Recommended Stakes:</strong> for your bankroll = 
+          £{{ calc_bankroll }}:
+        </p>
+        <ul>
+          {% for s in calc_stakes %}
+          <li>£{{ s }}</li>
+          {% endfor %}
+        </ul>
+        <p><strong>Guaranteed Payout:</strong> £{{ calc_payout }}</p>
+        <p><strong>Profit:</strong> £{{ calc_profit }}</p>
+      </div>
+    {% else %}
+      <div class="alert alert-danger">
+        <h4>Not an Arbitrage!</h4>
+        <p>Sum of Reciprocals: {{ calc_sum_recips|round(4) }} (>= 1.0)</p>
+        <p>This combination of odds doesn't guarantee profit.</p>
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<!-- NOTE ABOUT CALCULATING AN ARBITRAGE -->
+<div class="container my-4">
+  <div class="alert alert-info">
+    <h5>How to Calculate an Arbitrage Manually</h5>
+    <ul>
+      <li><strong>Step 1:</strong> For each outcome, take <code>1 / decimalOdds</code> and sum them.</li>
+      <li><strong>Step 2:</strong> If <code>sum_of_reciprocals &lt; 1</code>, it's an arbitrage.</li>
+      <li><strong>Step 3:</strong> Distribute (dutch) your total stake proportionally:
+        <div style="margin-left:1rem;">
+          <code>
+            stake_i = 
+            ( (1 / odds_i) / sum_of_reciprocals ) 
+            * totalStake
+          </code>
+        </div>
+      </li>
+      <li><strong>Step 4:</strong> Each outcome then pays out roughly the same amount, ensuring profit.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- LIST OF UK BOOKMAKERS (OPTIONAL) -->
+<div class="container my-4">
+  <h4>UK Bookmakers</h4>
+  <div class="alert alert-light border" role="alert">
+    <p>This is a list of some well-known UK bookmakers. Click any to visit their site:</p>
+    <div class="row">
+      <!-- Example: Bet365 -->
+      <div class="col-6 col-md-4 col-lg-3 mb-3">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title mb-3">Bet365</h5>
+            <a href="https://www.bet365.com" class="btn btn-outline-success" 
+               target="_blank" rel="noopener noreferrer">
+              Visit
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- Repeat similar blocks for other bookies (William Hill, Ladbrokes, etc.) -->
+    </div>
+    <small class="text-muted">
+      *Not an exhaustive list, but some of the major UK-licensed bookmakers.
+    </small>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span>&copy; 2024 Arbitrage Calculator. All rights reserved.</span>
+</footer>
+
+<!-- Bootstrap JS + jQuery + Popper -->
+<script 
+  src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+  integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+  crossorigin="anonymous">
+</script>
+<script
+  src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+  integrity="sha384-9/reFTGAW83EW2RDu2SszESbU5dga0FsO5vRv2AP7v9f7B7C52aF3GqZ3XW9p4vE"
+  crossorigin="anonymous">
+</script>
+<script
+  src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+  integrity="sha384-B4gt1jrGC7Jh4AgEp8F8wX7LRp6UJO7nV4W6n2E7jp5pJDMbJSZx00nQ8v6b7Omf"
+  crossorigin="anonymous">
+</script>
+</body>
+</html>

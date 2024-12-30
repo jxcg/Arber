@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Home - Arbitrage Calculator</title>
+  <link 
+    rel="stylesheet" 
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+  >
+  <style>
+    .navbar {
+      background-color: #28a745 !important; /* green navbar */
+    }
+    .navbar-brand,
+    .nav-link {
+      color: #fff !important; 
+    }
+    .hero {
+      background-color: #f8fdf8; /* very light greenish or white background */
+      color: #2f5c2f;           /* darker green text */
+      padding: 4rem 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .hero h1 {
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+    footer {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: #e9f7e9; /* subtle green or white with greenish tint */
+      color: #2f5c2f;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- navbxar -->
+<nav class="navbar navbar-expand-lg">
+  <a class="navbar-brand" href="#">Arb Calculator</a>
+</nav>
+
+<!--  -->
+<div class="hero">
+  <div class="container">
+    <h1>Welcome to the Arbitrage Calculator</h1>
+    <p class="lead">
+      Automatically detect profitable betting opportunities across bookmakers.
+    </p>
+    <a class="btn btn-success btn-lg" href="{{ url_for('opportunities') }}">
+      View Current Opportunities
+    </a>
+  </div>
+</div>
+
+<div class="container">
+  <h2>How It Works</h2>
+  <p>
+    This tool scans upcoming events and checks various UK bookmakers for 
+    potential arbitrage situations with bets where you can profit no matter the outcome.
+  </p>
+</div>
